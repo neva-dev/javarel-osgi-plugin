@@ -43,13 +43,17 @@ jar {
 pluginBundle {
     website = 'http://javarel.neva.zone/'
     vcsUrl = 'https://github.com/neva-dev/gradle-osgi-plugin'
-    description = 'Dedicated plugin for building OSGi containers and deploying applications on top of Javarel Framework'
+    description = 'Dedicated plugins for building OSGi containers and deploying applications on top of Javarel Framework'
     tags = ['osgi', 'bundle', 'felix', 'bnd']
 
     plugins {
-        scrPlugin {
-            id = 'neva.osgi'
-            displayName = 'Gradle OSGi Plugin'
+        osgiContainer {
+            id = 'neva.osgi-container'
+            displayName = 'Gradle OSGi Container Plugin'
+        }
+        osgiModule {
+            id = 'neva.osgi-module'
+            displayName = 'Gradle OSGi Module Plugin'
         }
     }
 }
