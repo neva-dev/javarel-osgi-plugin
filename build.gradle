@@ -1,9 +1,21 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.gradle.publish:plugin-publish-plugin:0.9.4"
+    }
+}
+
 group 'com.neva.gradle.plugin'
-version '1.0.0-SNAPSHOT'
+version '1.0.0'
 defaultTasks = ['clean', 'install']
 
 apply plugin: 'groovy'
 apply plugin: 'maven'
+apply plugin: 'com.gradle.plugin-publish'
 
 dependencies {
     compile gradleApi()
@@ -28,3 +40,16 @@ jar {
     targetCompatibility = 1.6
 }
 
+pluginBundle {
+    website = 'http://javarel.neva.zone/'
+    vcsUrl = 'https://github.com/neva-dev/gradle-osgi-plugin'
+    description = 'Dedicated plugin for building OSGi containers and deploying applications on top of Javarel Framework'
+    tags = ['osgi', 'bundle', 'felix', 'bnd']
+
+    plugins {
+        scrPlugin {
+            id = 'neva.osgi'
+            displayName = 'Gradle OSGi Plugin'
+        }
+    }
+}
