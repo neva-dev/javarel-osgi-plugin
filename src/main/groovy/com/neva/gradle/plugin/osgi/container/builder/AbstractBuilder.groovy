@@ -5,8 +5,8 @@ import com.neva.gradle.plugin.osgi.container.ContainerException
 import com.neva.gradle.plugin.osgi.container.ContainerExtension
 import com.neva.gradle.plugin.osgi.container.util.BundleDetector
 import com.neva.gradle.plugin.osgi.container.util.BundleWrapper
-import com.neva.gradle.plugin.osgi.container.util.MapStringifier
 import com.neva.gradle.plugin.osgi.container.util.DependencyResolver
+import com.neva.gradle.plugin.osgi.container.util.MapStringifier
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
@@ -15,7 +15,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.FileTreeElement
 
-class AbstractBuilder implements ContainerBuilder {
+abstract class AbstractBuilder implements ContainerBuilder {
 
     static final FILE_ENCODING = 'UTF-8'
 
@@ -23,6 +23,10 @@ class AbstractBuilder implements ContainerBuilder {
 
     AbstractBuilder(Project project) {
         this.project = project
+
+        init()
+
+        extension.exclude(["junit*", extension.mainDependency])
     }
 
     @Override
@@ -62,6 +66,9 @@ class AbstractBuilder implements ContainerBuilder {
 
     def copyBundles(Collection<File> files) {
         def nonBundles = []
+
+        project.logger.info "Exclusion filters: ${extension.exclusions}"
+
         def excluded = files.findAll { file ->
             extension.exclusions.any { exclusion ->
                 FilenameUtils.wildcardMatch(file.path, StringUtils.replace(exclusion, "/", File.separator), IOCase.INSENSITIVE)
@@ -71,6 +78,8 @@ class AbstractBuilder implements ContainerBuilder {
         if (!excluded.empty) {
             project.logger.info "Excluding dependencies: ${excluded.collect { it.name }}"
         }
+
+        project.logger.info "File install filters: ${extension.fileInstallFilters}"
 
         def included = files - excluded
         def installables = included.findAll { file ->
