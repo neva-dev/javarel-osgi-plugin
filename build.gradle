@@ -9,13 +9,13 @@ buildscript {
     }
 }
 
-group 'com.neva.gradle.plugin'
-version '1.0.0'
-defaultTasks = ['clean', 'install']
-
 apply plugin: 'groovy'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'com.gradle.plugin-publish'
+
+group 'com.neva.gradle.plugin'
+version '1.0.1'
+defaultTasks = ['clean', 'install']
 
 dependencies {
     compile gradleApi()
@@ -32,12 +32,22 @@ repositories {
 }
 
 jar {
+    baseName = "${project.group}-${project.name}"
     compileJava {
         options.encoding = "UTF-8"
     }
 
     sourceCompatibility = 1.6
     targetCompatibility = 1.6
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId jar.baseName
+            from components.java
+        }
+    }
 }
 
 pluginBundle {
