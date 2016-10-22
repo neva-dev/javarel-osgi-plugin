@@ -2,6 +2,7 @@ package com.neva.gradle.plugin.osgi.container
 
 import com.neva.gradle.plugin.osgi.container.builder.ContainerBuilder
 import com.neva.gradle.plugin.osgi.container.builder.FelixBuilder
+import com.neva.gradle.plugin.osgi.container.util.FileFilter
 import org.gradle.api.Project
 
 class ContainerExtension {
@@ -104,11 +105,7 @@ class ContainerExtension {
     }
 
     private addFilter(List<String> filters, String exclusion) {
-        if (exclusion.endsWith("*") || exclusion.endsWith(".jar")) {
-            filters.add("*/$exclusion")
-        } else {
-            filters.add("*/$exclusion/*")
-        }
+        filters.add(FileFilter.wildcardJarPattern(exclusion))
     }
 
 }

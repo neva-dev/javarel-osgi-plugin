@@ -27,10 +27,13 @@ class CreateContainerTask extends ContainerTask {
             throw new ContainerException("OSGi container type not specified.")
         }
 
+        logger.info "Initializing container builder"
+        extension.builder.init()
+
         logger.info "Creating container"
         extension.builder.main()
 
-        logger.info "Preparing bundles"
+        logger.info "Preparing jars"
         extension.builder.bundles()
 
         logger.info "Preparing configuration"

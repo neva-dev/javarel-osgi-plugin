@@ -1,18 +1,10 @@
 package com.neva.gradle.plugin.osgi.container.builder
 
 import com.neva.gradle.plugin.osgi.container.ContainerConfig
-import com.neva.gradle.plugin.osgi.container.ContainerException
 import com.neva.gradle.plugin.osgi.container.ContainerExtension
-import com.neva.gradle.plugin.osgi.container.util.BundleDetector
-import com.neva.gradle.plugin.osgi.container.util.BundleWrapper
-import com.neva.gradle.plugin.osgi.container.util.DependencyResolver
-import com.neva.gradle.plugin.osgi.container.util.MapStringifier
+import com.neva.gradle.plugin.osgi.container.util.*
 import groovy.text.SimpleTemplateEngine
-import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOCase
-import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.file.FileTreeElement
 
 abstract class AbstractBuilder implements ContainerBuilder {
@@ -21,58 +13,37 @@ abstract class AbstractBuilder implements ContainerBuilder {
 
     Project project
 
+    Collection<File> jars
+
     AbstractBuilder(Project project) {
         this.project = project
 
-        init()
+        configure()
 
         extension.exclude(["junit*", extension.mainDependency])
     }
 
     @Override
+    def init() {
+        this.jars = DependencyResolver.jars(project)
+    }
+
+    @Override
     def main() {
-        def config = project.configurations.getByName(ContainerConfig.MAIN)
-        def size = config.dependencies.size()
-
-        if (size == 0) {
-            throw new ContainerException("Configuration named '${ContainerConfig.MAIN}' should have container main dependency defined.")
-        } else if (size != 1) {
-            throw new ContainerException("Configuration named '${ContainerConfig.MAIN}' cannot have more than one dependency defined.")
-        }
-
         project.copy {
-            from config
+            from mainJar
             into extension.containerDir
         }
     }
 
     @Override
     def bundles() {
-        def moduleConfig = project.configurations.getByName(ContainerConfig.MODULE)
-        def moduleDeps = DependencyResolver.spread(moduleConfig)
-        def moduleJars = moduleConfig.resolve()
-
-        def allBundles = new HashSet<>(moduleJars)
-
-        moduleDeps.each { ProjectDependency projectDependency ->
-            def subProject = projectDependency.dependencyProject
-            def subBundles = subProject.configurations.getByName(ContainerConfig.BUNDLE).resolve()
-
-            allBundles += subBundles
-        }
-
-        copyBundles(allBundles)
-    }
-
-    def copyBundles(Collection<File> files) {
         def nonBundles = []
 
         project.logger.info "Exclusion filters: ${extension.exclusions}"
 
-        def excluded = files.findAll { file ->
-            extension.exclusions.any { exclusion ->
-                FilenameUtils.wildcardMatch(file.path, StringUtils.replace(exclusion, "/", File.separator), IOCase.INSENSITIVE)
-            }
+        def excluded = jars.findAll { file ->
+            extension.exclusions.any { exclusion -> FileFilter.wildcardJarFile(file, exclusion) }
         }
 
         if (!excluded.empty) {
@@ -81,11 +52,9 @@ abstract class AbstractBuilder implements ContainerBuilder {
 
         project.logger.info "File install filters: ${extension.fileInstallFilters}"
 
-        def included = files - excluded
+        def included = jars - excluded
         def installables = included.findAll { file ->
-            extension.fileInstallFilters.any { filter ->
-                FilenameUtils.wildcardMatch(file.path, StringUtils.replace(filter, "/", File.separator), IOCase.INSENSITIVE)
-            }
+            extension.fileInstallFilters.any { filter -> FileFilter.wildcardJarFile(file, filter) }
         }
         def deployables = included - installables
 
@@ -151,8 +120,27 @@ abstract class AbstractBuilder implements ContainerBuilder {
     }
 
     File getMainJar() {
-        def config = project.configurations.getByName(ContainerConfig.MAIN)
-        config.files.first()
+        def jar = null
+
+        def configFiles = project.configurations.getByName(ContainerConfig.MAIN).files
+        if (!configFiles.empty) {
+            jar = configFiles.first()
+            if (configFiles.size() > 1) {
+                project.logger.warn "Configuration named '${ContainerConfig.MAIN}' should not have more than one dependency defined."
+            }
+        }
+
+        if (jar == null) {
+            def filterFiles = jars.findAll { file -> FileFilter.wildcardJarFile(file, extension.mainDependency) }
+            if (!filterFiles.empty) {
+                jar = filterFiles.first()
+                if (filterFiles.size() > 1) {
+                    project.logger.warn "Found more than one container main dependency '${filterFiles}', first used."
+                }
+            }
+        }
+
+        return jar
     }
 
     String getBundleDir() {

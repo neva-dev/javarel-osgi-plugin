@@ -9,7 +9,7 @@ class FelixBuilder extends AbstractBuilder {
     }
 
     @Override
-    def init() {
+    def configure() {
         extension.exclude([
                 'org.apache.felix.main*',
                 'org.apache.felix.scr.annotations*',
@@ -19,4 +19,5 @@ class FelixBuilder extends AbstractBuilder {
         extension.runners += project.file("osgiContainer/felix/run.sh")
         extension.config(project.file("osgiContainer/felix/config.properties"))
     }
+
 }

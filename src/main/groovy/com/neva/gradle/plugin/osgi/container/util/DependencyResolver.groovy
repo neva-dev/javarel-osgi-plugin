@@ -1,9 +1,28 @@
 package com.neva.gradle.plugin.osgi.container.util
 
+import com.neva.gradle.plugin.osgi.container.ContainerConfig
+import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ProjectDependency
 
 final class DependencyResolver {
+
+    static Collection<File> jars(Project project) {
+        def moduleConfig = project.configurations.getByName(ContainerConfig.MODULE)
+        def moduleDeps = spread(moduleConfig)
+        def moduleJars = moduleConfig.resolve()
+
+        def allBundles = new HashSet<>(moduleJars)
+
+        moduleDeps.each { ProjectDependency projectDependency ->
+            def subProject = projectDependency.dependencyProject
+            def subBundles = subProject.configurations.getByName(ContainerConfig.BUNDLE).resolve()
+
+            allBundles += subBundles
+        }
+
+        return allBundles
+    }
 
     static Collection<ProjectDependency> spread(Configuration config) {
         def projDeps = config.allDependencies.findAll {
