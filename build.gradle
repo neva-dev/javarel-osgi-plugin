@@ -32,7 +32,6 @@ repositories {
 }
 
 jar {
-    baseName = "${project.group}-${project.name}"
     compileJava {
         options.encoding = "UTF-8"
     }
@@ -44,7 +43,6 @@ jar {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId jar.baseName
             from components.java
         }
     }

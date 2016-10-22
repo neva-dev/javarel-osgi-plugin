@@ -1,7 +1,7 @@
 package com.neva.gradle.plugin.osgi.container
 
-import com.neva.gradle.plugin.osgi.container.builder.FelixBuilder
 import com.neva.gradle.plugin.osgi.container.builder.ContainerBuilder
+import com.neva.gradle.plugin.osgi.container.builder.FelixBuilder
 import org.gradle.api.Project
 
 class ContainerExtension {
@@ -13,6 +13,8 @@ class ContainerExtension {
     ContainerBuilder builder
 
     Map<String, Object> config = [:]
+
+    String mainDependency
 
     List<File> runners = []
 
@@ -36,8 +38,6 @@ class ContainerExtension {
 
     ContainerExtension(Project project) {
         this.project = project
-
-        exclude(['junit*'])
     }
 
     def config(File file) {
@@ -52,9 +52,6 @@ class ContainerExtension {
 
     def felix() {
         builder = new FelixBuilder(project)
-        bundlePath = 'bundle'
-        runners += project.file("osgiContainer/felix/run.sh")
-        config(project.file("osgiContainer/felix/config.properties"))
     }
 
     def debug(Integer port = 16660, Boolean suspend = false) {
