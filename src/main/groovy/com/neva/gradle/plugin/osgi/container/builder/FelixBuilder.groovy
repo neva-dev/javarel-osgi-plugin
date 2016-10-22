@@ -12,6 +12,7 @@ class FelixBuilder extends AbstractBuilder {
     def configure() {
         extension.exclude([
                 'org.apache.felix.main*',
+                'org.apache.felix.framework*',
                 'org.apache.felix.scr.annotations*',
         ])
         extension.mainDependency = "org.apache.felix.main-*"
