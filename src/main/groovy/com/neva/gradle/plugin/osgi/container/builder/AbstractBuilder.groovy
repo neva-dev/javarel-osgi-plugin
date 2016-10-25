@@ -1,6 +1,7 @@
 package com.neva.gradle.plugin.osgi.container.builder
 
 import com.neva.gradle.plugin.osgi.container.ContainerConfig
+import com.neva.gradle.plugin.osgi.container.ContainerException
 import com.neva.gradle.plugin.osgi.container.ContainerExtension
 import com.neva.gradle.plugin.osgi.container.util.*
 import groovy.text.SimpleTemplateEngine
@@ -138,6 +139,11 @@ abstract class AbstractBuilder implements ContainerBuilder {
                     project.logger.warn "Found more than one container main dependency '${filterFiles}', first used."
                 }
             }
+        }
+
+        if (jar == null) {
+            throw new ContainerException("Main OSGi container jar not found. Please add valid 'osgiMain' dependency"
+                    + " or verify 'mainDependency' property of 'osgiContainer' extension.")
         }
 
         return jar
