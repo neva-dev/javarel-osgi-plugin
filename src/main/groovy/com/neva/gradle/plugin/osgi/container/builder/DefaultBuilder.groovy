@@ -5,28 +5,46 @@ import com.neva.gradle.plugin.osgi.container.ContainerException
 import com.neva.gradle.plugin.osgi.container.ContainerExtension
 import com.neva.gradle.plugin.osgi.container.util.*
 import groovy.text.SimpleTemplateEngine
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.FileTreeElement
 
-abstract class AbstractBuilder implements ContainerBuilder {
+class DefaultBuilder implements ContainerBuilder {
 
     static final FILE_ENCODING = 'UTF-8'
 
     Project project
 
+    ContainerExtension extension
+
     Collection<File> jars
 
-    AbstractBuilder(Project project) {
+    DefaultBuilder(Project project, ContainerExtension extension) {
         this.project = project
+        this.extension = extension
 
         configure()
-
         extension.exclude(["junit*", extension.mainDependency])
+    }
+
+    @Override
+    def configure() {
+        extension.exclude([
+                'org.apache.felix.main*',
+                'org.apache.felix.framework*',
+                'org.apache.felix.scr.annotations*',
+        ])
+        extension.mainDependency = "org.apache.felix.main-*"
+        extension.bundlePath = 'bundle'
+        extension.runners += project.file("osgiContainer/run.sh")
+        extension.config(project.file("osgiContainer/conf/config.properties"))
     }
 
     @Override
     def init() {
         this.jars = DependencyResolver.jars(project)
+
+        FileUtils.copyDirectory(project.file("osgiContainer"), project.file(extension.containerDir))
     }
 
     @Override
@@ -117,7 +135,13 @@ abstract class AbstractBuilder implements ContainerBuilder {
     }
 
     String getConfigContent() {
-        MapStringifier.asProperties(extension.config)
+        def raw = MapStringifier.asProperties(extension.config)
+        def vars = [
+                "containerDir": extension.containerDir,
+                "containerDirAbsolute": extension.containerDirAbsolute
+        ]
+
+        return new SimpleTemplateEngine().createTemplate(raw).make(vars).toString()
     }
 
     File getMainJar() {
@@ -159,10 +183,6 @@ abstract class AbstractBuilder implements ContainerBuilder {
 
     File getConfigFile() {
         new File("${extension.containerDir}/${extension.configFile}")
-    }
-
-    ContainerExtension getExtension() {
-        project.extensions.getByName(ContainerExtension.NAME) as ContainerExtension
     }
 
 }

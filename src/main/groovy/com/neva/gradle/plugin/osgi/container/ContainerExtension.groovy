@@ -1,7 +1,8 @@
 package com.neva.gradle.plugin.osgi.container
 
 import com.neva.gradle.plugin.osgi.container.builder.ContainerBuilder
-import com.neva.gradle.plugin.osgi.container.builder.FelixBuilder
+import com.neva.gradle.plugin.osgi.container.builder.DefaultBuilder
+
 import com.neva.gradle.plugin.osgi.container.util.FileFilter
 import org.gradle.api.Project
 
@@ -39,6 +40,7 @@ class ContainerExtension {
 
     ContainerExtension(Project project) {
         this.project = project
+        this.builder = new DefaultBuilder(project, this)
     }
 
     def config(File file) {
@@ -49,10 +51,6 @@ class ContainerExtension {
 
     def config(String key, Object value) {
         config.put(key, value)
-    }
-
-    def felix() {
-        builder = new FelixBuilder(project)
     }
 
     def debug(Integer port = 16660, Boolean suspend = false) {
@@ -73,6 +71,10 @@ class ContainerExtension {
 
     String getProgramArgs() {
         return programArgs.join(' ')
+    }
+
+    def getContainerDirAbsolute() {
+        return new File(containerDir).absolutePath
     }
 
     def exclude(List<String> exclusions) {
